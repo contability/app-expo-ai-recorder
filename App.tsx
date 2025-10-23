@@ -16,30 +16,38 @@ export default function App() {
   const startRecord = async () => {
     await audioRecorder.prepareToRecordAsync();
     audioRecorder.record();
+    sendMessageToWebView({ type: 'onStartRecord' });
   };
-  const stopRecord = async () => {
-    console.log('STOP!');
 
+  const stopRecord = async () => {
     // The recording will be available on `audioRecorder.uri`.
     if (recorderState.isRecording) {
       await audioRecorder.stop();
       const filePath = audioRecorder.uri;
+      console.log('🚀 ~ stopRecord ~ filePath:', filePath);
       if (filePath) {
-        const ext = filePath.split('.').pop();
-        const base64audio = new File(filePath).base64();
-        console.log('🚀 ~ stopRecord ~ base64audio:', base64audio);
-        sendMessageToWebView({ type: 'onStopRecord', data: { audio: base64audio, ext, mimeType: 'audio/mp4' } });
+        try {
+          const ext = filePath.split('.').pop();
+          const file = new File(filePath);
+          const base64audio = await file.base64();
+          console.log('🚀 ~ stopRecord ~ base64audio:', base64audio);
+          sendMessageToWebView({ type: 'onStopRecord', data: { audio: base64audio, ext, mimeType: 'audio/mp4' } });
+        } catch (error) {
+          console.error('파일 base64 인코딩 실패:', error);
+        }
       }
     }
   };
+
   const pauseRecord = () => {
     if (recorderState.isRecording) {
       audioRecorder.pause();
       sendMessageToWebView({ type: 'onPauseRecord' });
     }
   };
+
   const resumeRecord = () => {
-    if (recorderState.isRecording) {
+    if (!recorderState.isRecording) {
       audioRecorder.record();
       sendMessageToWebView({ type: 'onResumeRecord' });
     }
@@ -47,7 +55,6 @@ export default function App() {
 
   const sendMessageToWebView = ({ type, data }: { type: string; data?: any }) => {
     const message = JSON.stringify({ type, data });
-    console.log('🚀 ~ sendMessageToWebView ~ message:', message);
     webViewRef.current?.postMessage(message);
   };
 
