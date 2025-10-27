@@ -30,7 +30,15 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "app-expo-ai-recorder 에서 녹음 권한을 요청합니다."
+          "microphonePermission": "app-expo-ai-recorder 에서 녹음 기능 권한을 요청합니다."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "app-expo-ai-recorder에서 카메라 기능 권한을 요청합니다.",
+          "microphonePermission": "app-expo-ai-recorder에서 마이크 기능 권한을 요청합니다.",
+          "recordAudioAndroid": true
         }
       ]
     ]
