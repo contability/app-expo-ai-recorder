@@ -4,6 +4,7 @@ import { useAudioRecorder, AudioModule, RecordingPresets, setAudioModeAsync, use
 import { useEffect, useRef, useState } from 'react';
 import { File, Directory, Paths } from 'expo-file-system';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
@@ -34,6 +35,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
 });
+
+const DATABASE_KEY = 'database';
 
 export default function App() {
   const webViewRef = useRef<WebView>(null);
@@ -112,6 +115,16 @@ export default function App() {
     }
   };
 
+  const loadDatabase = async () => {
+    const stringifiedDatabase = await AsyncStorage.getItem(DATABASE_KEY);
+    const database = stringifiedDatabase ? JSON.parse(stringifiedDatabase) : {};
+    sendMessageToWebView({ type: 'onLoadDatabase', data: database });
+  };
+
+  const saveDatabase = async (database: any) => {
+    await AsyncStorage.setItem(DATABASE_KEY, JSON.stringify(database));
+  };
+
   useEffect(() => {
     (async () => {
       const status = await AudioModule.requestRecordingPermissionsAsync();
@@ -138,7 +151,7 @@ export default function App() {
         source={{ uri: Platform.OS === 'ios' ? 'http://localhost:3000' : 'http://10.0.2.2:3000' }}
         onMessage={event => {
           console.log(event.nativeEvent.data);
-          const { type } = JSON.parse(event.nativeEvent.data);
+          const { type, data } = JSON.parse(event.nativeEvent.data);
           switch (type) {
             case 'start-record':
               startRecord();
@@ -154,6 +167,12 @@ export default function App() {
               break;
             case 'open-camera':
               openCamera();
+              break;
+            case 'load-database':
+              loadDatabase();
+              break;
+            case 'save-database':
+              saveDatabase(data);
               break;
             default:
               break;
